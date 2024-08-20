@@ -1,0 +1,9 @@
+git+https://github.com/hc-sc-ocdo-bdpd/file-processing-tools.git
+ipykernel
+ipywidgets
+pandas
+tqdm
+numpy
+faiss-cpu
+sentence-transformers
+langchain
