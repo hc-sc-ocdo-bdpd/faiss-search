@@ -8,3 +8,21 @@ __pycache__/
 # environments
 .venv
 venv/
+
+# unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.pylintrc
+
+# vscode
+.vscode/*.*
