@@ -1,7 +1,6 @@
 import faiss
 import numpy as np
 from faiss_search.faiss_index.faiss_strategy import FAISSStrategy
-from file_processing.tools.errors import UnsupportedHyperparameterError
 
 
 class IVFFlatIndex(FAISSStrategy):
@@ -12,9 +11,9 @@ class IVFFlatIndex(FAISSStrategy):
         if not isinstance(nlist, int):
             raise TypeError("nlist must be an int type")
         if nlist < 1:
-            raise UnsupportedHyperparameterError("nlist cannot be less than 1")
+            raise ValueError("nlist cannot be less than 1")
         if nlist > embeddings.shape[0]:
-            raise UnsupportedHyperparameterError(
+            raise ValueError(
                 f"nlist value of {nlist} is larger than the number of documents in the index")
         quantizer = faiss.IndexFlat(dimension, metric)
         index = faiss.IndexIVFFlat(quantizer, dimension, nlist, metric)
@@ -25,7 +24,7 @@ class IVFFlatIndex(FAISSStrategy):
     def query(self, xq: np.ndarray, k: int = 1, nprobe: int = None):
         if nprobe is not None:
             if nprobe not in range(1, self.index.nlist + 1):
-                raise UnsupportedHyperparameterError(
+                raise ValueError(
                     f"nprobe must be between 1 and {self.index.nlist}")
             self.index.nprobe = nprobe
         return super().query(xq, k)

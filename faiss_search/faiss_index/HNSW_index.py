@@ -1,7 +1,6 @@
 import faiss
 import numpy as np
 from faiss_search.faiss_index.faiss_strategy import FAISSStrategy
-from file_processing.tools.errors import UnsupportedHyperparameterError
 
 
 class HNSWIndex(FAISSStrategy):
@@ -16,10 +15,10 @@ class HNSWIndex(FAISSStrategy):
         if not isinstance(efConstruction, int):
             raise TypeError("efConstruction must be an int type")
         if M < 1:
-            raise UnsupportedHyperparameterError(
+            raise ValueError(
                 "M cannot be less than 1")
         if efConstruction < 1:
-            raise UnsupportedHyperparameterError(
+            raise ValueError(
                 "efConstruction cannot be less than 1")
         dimension = embeddings.shape[1]
         index = faiss.IndexHNSWFlat(dimension, M, metric)
@@ -30,7 +29,7 @@ class HNSWIndex(FAISSStrategy):
     def query(self, xq: np.ndarray, k: int = 1, efSearch: int = None):
         if efSearch is not None:
             if efSearch < 1:
-                raise UnsupportedHyperparameterError(
+                raise ValueError(
                     "efSearch cannot be less than 1")
             self.index.hnsw.efSearch = efSearch
         return super().query(xq, k)
