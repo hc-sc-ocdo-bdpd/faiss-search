@@ -8,6 +8,10 @@ from faiss_search import SearchDirectory
 def resource_folder():
     return "tests/resources/sample_text_files"
 
+@pytest.fixture(scope="module")
+def embedding_model():
+    return "paraphrase-MiniLM-L3-v2"
+
 # Test chunking step
 
 def test_empty_directory(tmp_path):
