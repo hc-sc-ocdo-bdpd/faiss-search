@@ -51,7 +51,7 @@ def test_load_with_chunks(directory_with_chunks):
 
 def test_load_chunks_different_column_names(directory_with_chunks, tmp_path):
     search1 = SearchDirectory(tmp_path)
-    search1.chunk_text("tests/resources/document_search_test_files/report_modified.csv",
+    search1.chunk_text("tests/resources/search_directory_test_files/report_modified.csv",
                        "path",
                        "content")
     search2 = SearchDirectory(directory_with_chunks)
