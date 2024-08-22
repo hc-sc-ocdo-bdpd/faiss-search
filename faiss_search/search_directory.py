@@ -7,6 +7,7 @@ from typing import List
 from tqdm import tqdm
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from file_processing import Directory
+from tools.errors import FileTypeError
 
 class SearchDirectory:
     def __init__(self, folder_path: str) -> None:
