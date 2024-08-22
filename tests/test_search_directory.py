@@ -6,7 +6,7 @@ from faiss_search import SearchDirectory
 
 @pytest.fixture(scope="module")
 def resource_folder():
-    return "tests/resources/similarity_test_files"
+    return "tests/resources/sample_text_files"
 
 # Test chunking step
 
