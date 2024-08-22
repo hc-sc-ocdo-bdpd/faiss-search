@@ -147,7 +147,7 @@ def test_overlapping_embedding_files(embedding_model, tmp_path):
                        "content")
     search2.load_embedding_model(embedding_model)
     search2.embed_text()
-    search1 = SearchDirectory("tests/resources/document_search_test_files")
+    search1 = SearchDirectory("tests/resources/search_directory_test_files")
     search1.chunk_text("tests/resources/search_directory_test_files/report_modified.csv",
                        "path",
                        "content")
