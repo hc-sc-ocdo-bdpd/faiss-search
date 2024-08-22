@@ -34,6 +34,9 @@ RUN python3 -m pip install -r requirements.txt
 # Special installation for llama-cpp-python with GPU support
 RUN pip install llama-cpp-python==0.2.55 --no-cache-dir --force-reinstall --verbose
 
+# Force specific numpy version
+RUN python3 -m pip install numpy==1.26.2 --no-cache-dir --force-reinstall
+
 # Expose Jupyter port
 EXPOSE 8888
 
