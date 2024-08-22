@@ -33,6 +33,11 @@ class SearchDirectory:
         else:
             self.n_chunks = None
             self.encoding_name = None
+        # load the encoding model
+        if self.encoding_name is not None:
+            self.load_embedding_model(self.encoding_name)
+        else:
+            self.encoder = None
 
     def _get_text_chunks(self, text: str, chunk_size: int, chunk_overlap: int) -> List[str]:
         """
