@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 from faiss_search import DatasetVariability
