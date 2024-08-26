@@ -3,11 +3,11 @@ import numpy as np
 class DatasetVariability:
     def __init__(self, embedding: np.ndarray, normalize: bool = True) -> None:
         if normalize:
-            self.embedding = normalize(embedding)
+            self.embedding = self.normalize(embedding)
         else:
             self.embedding = embedding
 
-    def normalize(embedding: np.ndarray) -> None:
+    def normalize(self, embedding: np.ndarray) -> None:
         return embedding / np.linalg.norm(embedding, axis=1, keepdims=True)
 
     def variance(self) -> float:
