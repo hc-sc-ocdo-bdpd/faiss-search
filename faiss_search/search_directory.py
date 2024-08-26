@@ -31,10 +31,12 @@ class SearchDirectory:
             with open(os.path.join(self.folder_path, "setup_data.json"), 'r') as f:
                 setup_data = json.load(f)
                 self.encoding_name = setup_data['encoding_model']
+                self.is_gguf = setup_data['is_gguf']
                 self.n_chunks = setup_data['number_of_chunks']
         else:
             self.n_chunks = None
             self.encoding_name = None
+            self.is_gguf = None
         # get the faiss index
         if os.path.exists(os.path.join(self.folder_path, "index.faiss")):
             self.index = faiss_index.load_index(os.path.join(self.folder_path, "index.faiss"))
@@ -68,21 +70,21 @@ class SearchDirectory:
         """
         setup_data = {
             'encoding_model': self.encoding_name,
+            'is_gguf': self.is_gguf,
             'number_of_chunks': self.n_chunks
         }
         with open(os.path.join(self.folder_path, "setup_data.json"), 'w') as f:
             json.dump(setup_data, f, indent=4)
 
-    def _embed_string(self, text: str, gguf: bool = False) -> np.ndarray:
+    def _embed_string(self, text: str) -> np.ndarray:
         """
         Converts a text string into a vector representation using the encoding model.
 
         :param text: The text to be embedded.
-        :param gguf: True if a gguf model is being used. False if a sentance-transformer model is being used.
 
         :return: The embedding vector of the input text.
         """
-        if gguf:
+        if self.is_gguf:
             embedding = self.encoder.create_embedding(text)['data'][0]['embedding']
         else:
             embedding = self.encoder.encode(text)
