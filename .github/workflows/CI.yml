@@ -1,0 +1,23 @@
+name: Run Pytest
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: docker build . -t myproject:latest
+
+      - name: Run docker container
+        run: docker run -d --name mycontainer myproject:latest
+
+      - name: Run Pytest
+        run: docker exec mycontainer pytest --maxfail=1 --disable-warnings -q
+
+      - name: Clean up
+        run: docker rm -f mycontianer
