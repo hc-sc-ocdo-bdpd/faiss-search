@@ -11,13 +11,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build docker image
-        run: docker build . -t myproject:latest
-
-      - name: Run docker container
-        run: docker run -d --name mycontainer myproject:latest
+        run: docker build . -t faiss_search:latest
 
       - name: Run Pytest
-        run: docker exec mycontainer pytest --maxfail=1 --disable-warnings -q
+        run: docker run -i -v $PWD:/srv -w/srv faiss_search pytest tests/ --junit-xml=.test_report.xml
 
-      - name: Clean up
-        run: docker rm -f mycontianer
+      - name: Generate PyTest report
+        uses: test-summary/action@v2
+        with:
+          paths: .test_report.xml
+          show: fail
+        if: always()
