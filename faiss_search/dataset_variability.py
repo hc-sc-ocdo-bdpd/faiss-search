@@ -1,8 +1,14 @@
 import numpy as np
 
 class DatasetVariability:
-    def __init__(self, embedding: np.ndarray):
-        self.embedding = embedding
+    def __init__(self, embedding: np.ndarray, normalize: bool = True) -> None:
+        if normalize:
+            self.embedding = normalize(embedding)
+        else:
+            self.embedding = embedding
+
+    def normalize(embedding: np.ndarray) -> None:
+        return embedding / np.linalg.norm(embedding, axis=1, keepdims=True)
 
     def variance(self) -> float:
         return np.sum(np.var(self.embedding, axis=0))
