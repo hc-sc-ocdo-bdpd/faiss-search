@@ -199,7 +199,7 @@ class SearchDirectory:
         print(f"Total rows (excluding header): {total_rows}")
 
         # Process each row with tqdm to show progress
-        for index, row in tqdm(df.iterrows(), total=total_rows, desc="Processing rows"):
+        for _, row in tqdm(df.iterrows(), total=total_rows, desc="Processing rows"):
             file_path = row[document_path_column]
             content = row[document_text_column]
             
