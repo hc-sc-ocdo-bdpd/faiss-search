@@ -1,7 +1,6 @@
 import os
 import re
 import json
-import llama_cpp
 import numpy as np
 import pandas as pd
 from typing import List
@@ -12,6 +11,13 @@ from .tools.errors import FileTypeError
 from .tools.errors import EncodingModelError
 from faiss_search import faiss_index
 from sentence_transformers import SentenceTransformer
+
+# import docker specific requirement
+try:
+    import llama_cpp
+    llama_cpp_available = True
+except ImportError:
+    llama_cpp_available = False
 
 class SearchDirectory:
     def __init__(self, folder_path: str) -> None:
@@ -235,10 +241,13 @@ class SearchDirectory:
         """
         self.encoding_name = model_name
         if gguf:
-            self.is_gguf = True
-            self.encoder = llama_cpp.Llama(model_path=model_name,
-                                           embedding=True,
-                                           verbose=False)
+            if llama_cpp_available:
+                self.is_gguf = True
+                self.encoder = llama_cpp.Llama(model_path=model_name,
+                                            embedding=True,
+                                            verbose=False)
+            else:
+                print("Cannot load .gguf file. llama-cpp is not available.")
         else:
             self.is_gguf = False
             self.encoder = SentenceTransformer(model_name)
