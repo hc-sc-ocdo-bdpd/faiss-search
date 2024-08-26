@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import llama_cpp
 import numpy as np
 import pandas as pd
 from typing import List
@@ -72,15 +73,19 @@ class SearchDirectory:
         with open(os.path.join(self.folder_path, "setup_data.json"), 'w') as f:
             json.dump(setup_data, f, indent=4)
 
-    def _embed_string(self, text: str) -> np.ndarray:
+    def _embed_string(self, text: str, gguf: bool = True) -> np.ndarray:
         """
         Converts a text string into a vector representation using the encoding model.
 
         :param text: The text to be embedded.
+        :param gguf: True if a gguf model is being used. False if a sentance-transformer model is being used.
 
         :return: The embedding vector of the input text.
         """
-        embedding = self.encoder.encode(text)
+        if gguf:
+            embedding = self.encoder.create_embedding(text)['data'][0]['embedding']
+        else:
+            embedding = self.encoder.encode(text)
         return embedding
     
     def _combine_embeddings(self) -> None:
