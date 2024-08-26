@@ -73,7 +73,7 @@ class SearchDirectory:
         with open(os.path.join(self.folder_path, "setup_data.json"), 'w') as f:
             json.dump(setup_data, f, indent=4)
 
-    def _embed_string(self, text: str, gguf: bool = True) -> np.ndarray:
+    def _embed_string(self, text: str, gguf: bool = False) -> np.ndarray:
         """
         Converts a text string into a vector representation using the encoding model.
 
@@ -223,14 +223,23 @@ class SearchDirectory:
 
         print("Chunking complete and saved to 'data_chunked.csv'.")
 
-    def load_embedding_model(self, model_name: str = "paraphrase-MiniLM-L3-v2") -> None:
+    def load_embedding_model(self, model_name: str = "paraphrase-MiniLM-L3-v2", gguf: bool = False) -> None:
         """
         Loads the specified embedding model and saves the model name to JSON.
 
         :param model_name: Name of the embedding model to load.
+                           If gguf is set to true the model name will instead be the path to the gguf file.
+        :param gguf: True if a gguf model is being used; false if a sentance-transformer model is being used.
         """
         self.encoding_name = model_name
-        self.encoder = SentenceTransformer(model_name)
+        if gguf:
+            self.is_gguf = True
+            self.encoder = llama_cpp.Llama(model_path=model_name,
+                                           embedding=True,
+                                           verbose=False)
+        else:
+            self.is_gguf = False
+            self.encoder = SentenceTransformer(model_name)
         self._save_to_json()
 
     def embed_text(self, row_start: int = 0, row_end: int = None, batch_size: int = 1000) -> None:
