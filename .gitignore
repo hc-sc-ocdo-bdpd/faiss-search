@@ -1,2 +1,10 @@
+# notebooks and generated files
 similarity_test_files
 test_import.ipynb
+
+# byte-compiled
+__pycache__/
+
+# environments
+.venv
+venv/
