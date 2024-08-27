@@ -1,6 +1,7 @@
 git+https://github.com/hc-sc-ocdo-bdpd/file-processing-tools.git
 ipykernel
 ipywidgets
+pytest
 pandas
 tqdm
 numpy
