@@ -220,3 +220,4 @@ The ability to create indexes is limited to a select number of common indexes. M
 * This library currently relies on `file-processing-tools` as an upstream requirement. Changes to that library could impact features in `SearchDirectory`.
 * A generalized `load_embedding_model()` function should be created that allows users to pass in custom functions to perform embeddings to extend the functionality beyond just `sentence-transformers` and `.gguf` files. This would make using API embeddings possible from this library.
 * Potentially include a text cleaning process before the chunking step to remove noisy text data.
+* Create a GitHub pages site for the documentation
