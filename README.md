@@ -210,3 +210,13 @@ index.save("path/to/save.faiss")
 ```
 
 The ability to create indexes is limited to a select number of common indexes. More complex indexes can still be loaded and queried as with the other indexes but does not come with the ability to adjust hyperparameters during the query.
+
+<br>
+
+# Limitations and Future Work
+
+* Currently the embedding models can only be loaded from `.gguf` files if used in a dockerized container. This limits the use of this functionality in a packaged environment.
+* Continuous integration for unit testing is to be added in the development pipeline.
+* This library currently relies on `file-processing-tools` as an upstream requirement. Changes to that library could impact features in `SearchDirectory`.
+* A generalized `load_embedding_model()` function should be created that allows users to pass in custom functions to perform embeddings to extend the functionality beyond just `sentence-transformers` and `.gguf` files. This would make using API embeddings possible from this library.
+* Potentially include a text cleaning process before the chunking step to remove noisy text data.
