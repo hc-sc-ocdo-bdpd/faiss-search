@@ -50,7 +50,7 @@ Once all steps are completed, the following files will be contained in the speci
 | ---- | ------------ | ------- |
 | `report.csv` | `report_from_directory()` | Contains text info and metadata from files in a given directory |
 | `data_chunked.csv` | `chunk_text()` | Contains the chunked text data and corresponding file paths |
-| `setup_data.json` | `chunk_text() and `load_embedding_model()` | Contains the number of chunks and the name of the embedding model being used |
+| `setup_data.json` | `chunk_text() and `load_embedding_model()` | Contains the number of chunks and the name of the embedding model being used as well as if it's a `.gguf` model |
 | `embedding_batches/` | `embed_text()` | Contains embedding batches in the form of `.npy` files |
 | `embeddings.npy` | `embed_text()` | Contains the complete embeddings of the chunks data |
 | `index.faiss` | Any of the create index functions | Contains the embeddings in the form of a searchable FAISS index |
@@ -101,11 +101,11 @@ Both of these approaches will produce a chunked CSV file.
 <br>
 
 ### Loading Embedding Model
-Parameters - `model_name`
+Parameters - `model_name`, `gguf`
 
 Creates - `setup_data.json`
 
-The `load_embedding_model()` function is used to specify and load the embedding model that will be used in the text embedding and search steps. This function supports models that are hosted in the `sentence_transformers` library.
+The `load_embedding_model()` function is used to specify and load the embedding model that will be used in the text embedding and search steps. This function supports models that are hosted in the `sentence_transformers` library when `gguf` is set to `False` and will load a specified `.gguf` file when set to `True`.
 
 ```python
 search.load_embedding_model("paraphrase-MiniLM-L3-v2")
