@@ -38,7 +38,7 @@ The `SearchDirectory` class contains the end-to-end functionality that can creat
 The functions contained within `SearchDirectory` are designed to manipulate existing data and store it in formats that lend themselves better search features. All of the files created will be stored in the folder specified when the `SearchDirectory` object is created. For example, if the following code is run it will create a `SearchDirectory` object that saves any files that it creates to `path/to/folder`.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 ```
 
@@ -63,7 +63,7 @@ Creates - `report.csv`
 If working with a directory of files, the `report_from_directory()` function generates a `report.csv` file that contains the text and metadata of any text-based files in that directory.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.report_from_directory("text/documents/directory/path")
 ```
@@ -80,7 +80,7 @@ Many embedding models and LLMs have a limited context window. This means any lar
 It takes a `.csv` file containing a text field and a file path field as input. The `document_path_column` and `document_text_column` parameters are used to specify the column names in the `.csv`.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.chunk_text("path/to/csv/file.csv",
                   document_path_column="file path",
@@ -90,7 +90,7 @@ search.chunk_text("path/to/csv/file.csv",
 Alternatively, if a `report.csv` file was already generated and is contained in the folder then no `.csv` file needs to be specified and the function will use the `report.csv` file as the input.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.report_from_directory("text/documents/directory/path")
 search.chunk_text()
@@ -121,7 +121,7 @@ Creates - `embedding_batches/`, `embeddings.npy`
 The `embed_text()` function takes in the `data_chunked.csv` file and outputs an embedding file called `embeddings.npy`. Because the embeddings can be a time intensive computation, the embeddings are saved in batches of a specified size to the `embedding_batches/` folder in order to save progress. Once all of the chunk embeddings are saved in the `embedding_batches` folder the embeddings are combined and saved to `embeddings.npy`.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.report_from_directory("text/documents/directory/path")
 search.chunk_text()
@@ -139,7 +139,7 @@ Creates - `index.faiss`
 There are a few different functions to create FAISS indexes adopted from the `file_processing.faiss_index` library with the same functionality. The only difference is that the FAISS index is automatically saved to the folder. If the embeddings is not specified, it will check if `embeddings.npy` is contained in the folder and it will use that file.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.report_from_directory("text/documents/directory/path")
 search.chunk_text()
@@ -156,7 +156,7 @@ Parameters - `query`, `k`, `args`
 The `search()` function takes in a query and returns the `k` closest matching chunks and corresponding file paths. The function also can take in arguments that can specify the FAISS index search hyperparameters.
 
 ```python
-from file_processing import SearchDirectory
+from faiss_search import SearchDirectory
 search = SearchDirectory("path/to/folder")
 search.report_from_directory("text/documents/directory/path")
 search.chunk_text()
@@ -194,7 +194,8 @@ The `faiss_index` import offers a collection of functions that make it easy to i
 Once an index is created it can be queried. This involves providing a query vector as an input and the index will return the nearest `k` vectors contained in the index (as found by that algorithm). Consider the example below to view the functionality:
 
 ```python
-index = faiss_index.load_index("path/to/file.faiss")
+import faiss_search
+index = faiss_search.faiss_index.load_index("path/to/file.faiss")
 nearest_three_vectors = index.query(query_vector, k=3)
 ```
 
@@ -202,9 +203,9 @@ For large numbers of documents, creating the index can take a while so it is oft
 
 ```python
 # save the index when creating it
-index = faiss_index.create_flat_index(embeddings, "path/to/save.faiss")
+index = faiss_search.faiss_index.create_flat_index(embeddings, "path/to/save.faiss")
 # save the index afetr creating it
-index = faiss_index.create_flat_index(embeddings)
+index = faiss_search.faiss_index.create_flat_index(embeddings)
 index.save("path/to/save.faiss")
 ```
 
