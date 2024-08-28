@@ -168,6 +168,20 @@ search.search("What is the meaning of life, the universe, and everything?", k=3,
 
 <br>
 
+## Dataset Variability
+
+The Dataset Variability import is designed to compute statistics about how similar the contents of a dataset are to one another based on the embeddings. It takes in a numpy array of embeddings as an input along with an option to normalize the embeddings and has two functions that can be called to compute the similarity.
+
+```python
+from faiss_search import DatasetVariability
+embeddings = np.load("path/to/embeddings.npy")
+variability = DatasetVariability(embeddings, normalize=True)
+print(f"mean cosine similarity: {variability.cosine_similarity_avg()}")
+print(f"mean L2 distance: {variability.variance()}")
+```
+
+<br>
+
 ## FAISS Indexes
 
 The FAISS index functionality is utilized by `SearchDirectory` but can also be called on its own if working directly with these indexes.
