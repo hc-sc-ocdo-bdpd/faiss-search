@@ -2,6 +2,7 @@ import os
 import pytest
 import shutil
 import numpy as np
+import pandas as pd
 from faiss_search import SearchDirectory
 
 @pytest.fixture(scope="module")
@@ -53,8 +54,13 @@ def test_load_with_chunks(directory_with_chunks):
     search = SearchDirectory(directory_with_chunks)
     assert search.n_chunks is not None
 
-def test_load_chunks_different_column_names(directory_with_chunks, tmp_path):
+def test_load_chunks_different_column_names(directory_with_chunks, tmp_path, resource_folder):
     search1 = SearchDirectory(tmp_path)
+    search1.report_from_directory(resource_folder)
+    df = pd.read_csv(tmp_path / "report.csv")[["File Path", "Text"]]
+    df['path'] = df["File Path"]
+    df['content'] = df["Text"]
+    df.to_csv("tests/resources/search_directory_test_files/report_modified.csv")
     search1.chunk_text("tests/resources/search_directory_test_files/report_modified.csv",
                        "path",
                        "content")

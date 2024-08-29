@@ -95,16 +95,20 @@ class SearchDirectory:
         if file_ranges[0][1] == 0:
             start = 0
             for filename, batch_start, batch_end in file_ranges:
+                if batch_end > self.n_chunks:
+                    batch_end = self.n_chunks
                 emb = np.load(os.path.join(batch_path, filename))
                 if batch_start == 0:
                     emb_full = emb
                 else:
                     if start >= batch_start:
-                        emb_full = np.vstack((emb_full, emb[start - batch_start:]))
+                        emb_full = np.vstack((emb_full, emb[start - batch_start:batch_end - batch_start]))
                 start = batch_end
             if emb_full.shape[0] == self.n_chunks:
                 np.save(os.path.join(self.folder_path, "embeddings.npy"), emb_full)
                 print("Embeddings combined and saved to embeddings.npy")
+            else:
+                print("Embeddings not yet combined. The remainder of the embeddings left must be completed before they can be combined.")
         else:
             print("Embeddings not yet combined. The remainder of the embeddings left must be completed before they can be combined.")
 
@@ -231,71 +235,74 @@ class SearchDirectory:
         :param row_end: Ending index of rows to process. If None, processes till the end.
         :param batch_size: Number of rows to process in each batch.
         """
-        if self.chunks_path is None:
-            raise FileNotFoundError(f"Error: data_chunked.csv not located in {self.folder_path}")
-        if self.encoder is None:
-            raise EncodingModelError("Error: no encoding model found. Run 'load_embedding_model' first.")
+        if os.path.exists(os.path.join(self.folder_path, "embeddings.npy")):
+            print("embeddings.npy already found in folder.")
         else:
-            os.makedirs(os.path.join(self.folder_path, "embedding_batches"), exist_ok=True)
-            chunked_df = pd.read_csv(self.chunks_path)
-            n_chunks = len(chunked_df)
+            if self.chunks_path is None:
+                raise FileNotFoundError(f"Error: data_chunked.csv not located in {self.folder_path}")
+            if self.encoder is None:
+                raise EncodingModelError("Error: no encoding model found. Run 'load_embedding_model' first.")
+            else:
+                os.makedirs(os.path.join(self.folder_path, "embedding_batches"), exist_ok=True)
+                chunked_df = pd.read_csv(self.chunks_path)
+                n_chunks = len(chunked_df)
 
-            if (row_end is None) or (row_end > n_chunks):
-                row_end = n_chunks
+                if (row_end is None) or (row_end > n_chunks):
+                    row_end = n_chunks
 
-            # handle index error values and negative indexes
-            if row_start < -n_chunks - 1:
-                raise IndexError(f"Row start {row_start} is out of bounds for {n_chunks} chunks.")
-            elif row_start < 0:
-                row_start = n_chunks + row_start + 1
-            if row_end < -n_chunks -1:
-                raise IndexError(f"Row end {row_end} is out of bounds for {n_chunks} chunks.")
-            elif row_end < 0:
-                row_end = n_chunks + row_end +1
-            if row_start >= n_chunks:
-                raise IndexError(f"Start index of {row_start} is out of bounds for {n_chunks} chunks")
-            if row_end <= row_start:
-                raise ValueError(f"Row end ({row_end}) cannot be less than the row start ({row_start}).")
-        
-            batch_path = os.path.join(self.folder_path, "embedding_batches")
-            pattern = r"\((\d+)-(\d+)\)"
-
-            contained_ranges = []
-
-            for filename in os.listdir(batch_path):
-                match = re.search(pattern, filename)
-                batch_start = int(match.group(1))
-                batch_end = int(match.group(2))
-                if (batch_start < row_end) and (batch_end > row_start):
-                    if batch_start < row_start:
-                        batch_start = row_start
-                    if batch_end > row_end:
-                        batch_end = row_end
-                    contained_ranges.append((batch_start, batch_end))
+                # handle index error values and negative indexes
+                if row_start < -n_chunks - 1:
+                    raise IndexError(f"Row start {row_start} is out of bounds for {n_chunks} chunks.")
+                elif row_start < 0:
+                    row_start = n_chunks + row_start + 1
+                if row_end < -n_chunks -1:
+                    raise IndexError(f"Row end {row_end} is out of bounds for {n_chunks} chunks.")
+                elif row_end < 0:
+                    row_end = n_chunks + row_end +1
+                if row_start >= n_chunks:
+                    raise IndexError(f"Start index of {row_start} is out of bounds for {n_chunks} chunks")
+                if row_end <= row_start:
+                    raise ValueError(f"Row end ({row_end}) cannot be less than the row start ({row_start}).")
             
-            contained_ranges.sort(key=lambda x: x[1])
+                batch_path = os.path.join(self.folder_path, "embedding_batches")
+                pattern = r"\((\d+)-(\d+)\)"
 
-            segments = []
-            for batch_start, batch_end in contained_ranges:
+                contained_ranges = []
+
+                for filename in os.listdir(batch_path):
+                    match = re.search(pattern, filename)
+                    batch_start = int(match.group(1))
+                    batch_end = int(match.group(2))
+                    if (batch_start < row_end) and (batch_end > row_start):
+                        if batch_start < row_start:
+                            batch_start = row_start
+                        if batch_end > row_end:
+                            batch_end = row_end
+                        contained_ranges.append((batch_start, batch_end))
+                
+                contained_ranges.sort(key=lambda x: x[1])
+
+                segments = []
+                for batch_start, batch_end in contained_ranges:
+                    if row_start < row_end:
+                        if (batch_start > row_start):
+                            segments.append((row_start, batch_start))
+                        row_start = batch_end
                 if row_start < row_end:
-                    if (batch_start > row_start):
-                        segments.append((row_start, batch_start))
-                    row_start = batch_end
-            if row_start < row_end:
-                segments.append((row_start, row_end))
+                    segments.append((row_start, row_end))
 
-            for start, end in segments:
-                current_row = start
+                for start, end in segments:
+                    current_row = start
 
-                while current_row < end:
-                    df = chunked_df[current_row:min(end, current_row + batch_size)]
+                    while current_row < end:
+                        df = chunked_df[current_row:min(end, current_row + batch_size)]
 
-                    tqdm.pandas()
-                    embeddings = np.array(df['content'].progress_apply(self._embed_string).to_list())
+                        tqdm.pandas()
+                        embeddings = np.array(df['content'].progress_apply(self._embed_string).to_list())
 
-                    # Save the new DataFrame to a new CSV file
-                    np.save(os.path.join(self.folder_path, f"embedding_batches/embeddings ({current_row}-{min(end, current_row + batch_size)}).npy"), embeddings)
-                    print(f"Embedding batch complete and saved to embeddings ({current_row}-{min(end, current_row + batch_size)}).npy').")
-                    current_row += batch_size
+                        # Save the new DataFrame to a new CSV file
+                        np.save(os.path.join(self.folder_path, f"embedding_batches/embeddings ({current_row}-{min(end, current_row + batch_size)}).npy"), embeddings)
+                        print(f"Embedding batch complete and saved to embeddings ({current_row}-{min(end, current_row + batch_size)}).npy').")
+                        current_row += batch_size
 
-            self._combine_embeddings()
+                self._combine_embeddings()
