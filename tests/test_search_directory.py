@@ -161,3 +161,79 @@ def test_overlapping_embedding_files(embedding_model, tmp_path):
         os.remove("tests/resources/search_directory_test_files/data_chunked.csv")
         os.remove("tests/resources/search_directory_test_files/setup_data.json")
         os.remove("tests/resources/search_directory_test_files/embeddings.npy")
+
+# Test FAISS search step
+
+def test_flat_faiss_index_creation(directory_with_embeding_module):
+    search = SearchDirectory(directory_with_embeding_module)
+    try:
+        search.embed_text()
+        search.create_flat_index()
+        assert os.path.exists(directory_with_embeding_module / "index.faiss")
+    finally:
+        shutil.rmtree(directory_with_embeding_module / "embedding_batches")
+        os.remove(directory_with_embeding_module / "embeddings.npy")
+        os.remove(directory_with_embeding_module / "index.faiss")
+
+def test_ivf_flat_faiss_index_creation(directory_with_embeding_module):
+    search = SearchDirectory(directory_with_embeding_module)
+    try:
+        search.embed_text()
+        search.create_ivf_flat_index()
+        assert os.path.exists(directory_with_embeding_module / "index.faiss")
+    finally:
+        shutil.rmtree(directory_with_embeding_module / "embedding_batches")
+        os.remove(directory_with_embeding_module / "embeddings.npy")
+        os.remove(directory_with_embeding_module / "index.faiss")
+
+def test_hnsw_faiss_index_creation(directory_with_embeding_module):
+    search = SearchDirectory(directory_with_embeding_module)
+    try:
+        search.embed_text()
+        search.create_hnsw_index()
+        assert os.path.exists(directory_with_embeding_module / "index.faiss")
+    finally:
+        shutil.rmtree(directory_with_embeding_module / "embedding_batches")
+        os.remove(directory_with_embeding_module / "embeddings.npy")
+        os.remove(directory_with_embeding_module / "index.faiss")
+
+@pytest.fixture(scope="module")
+def directory_with_faiss(resource_folder, tmp_path_factory, embedding_model):
+    file_path = tmp_path_factory.mktemp("with_faiss")
+    search = SearchDirectory(file_path)
+    search.report_from_directory(resource_folder)
+    search.chunk_text()
+    search.load_embedding_model(embedding_model)
+    search.embed_text()
+    search.create_ivf_flat_index()
+    return file_path
+
+search_variable_names = "query, k, nprobe"
+general_query = "What is the meaning of life, the universe, and everything?"
+search_values = [
+    (general_query, 3, 1),
+    (general_query, 3, 3),
+    (general_query, 1, 3)
+]
+
+@pytest.mark.parametrize(search_variable_names, search_values)
+def test_faiss_search(directory_with_faiss, query, k, nprobe):
+    search_ivf = SearchDirectory(directory_with_faiss)
+    results_ivf = search_ivf.search(query, k, nprobe)
+    assert search_ivf.index.index.nprobe == nprobe
+    assert len(results_ivf) == k
+
+def test_search_no_chunks(tmp_path):
+    search = SearchDirectory(tmp_path)
+    with pytest.raises(Exception):
+        search.search("Test")
+
+def test_search_no_embedding_model(directory_with_chunks):
+    search = SearchDirectory(directory_with_chunks)
+    with pytest.raises(Exception):
+        search.search("Test")
+
+def test_search_no_faiss(directory_with_embeding_module):
+    search = SearchDirectory(directory_with_embeding_module)
+    with pytest.raises (Exception):
+        search.search("Test")

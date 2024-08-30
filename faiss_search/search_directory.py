@@ -9,6 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from file_processing import Directory
 from .tools.errors import FileTypeError
 from .tools.errors import EncodingModelError
+from faiss_search import faiss_index
 from sentence_transformers import SentenceTransformer
 
 class SearchDirectory:
@@ -33,6 +34,11 @@ class SearchDirectory:
         else:
             self.n_chunks = None
             self.encoding_name = None
+        # get the faiss index
+        if os.path.exists(os.path.join(self.folder_path, "index.faiss")):
+            self.index = faiss_index.load_index(os.path.join(self.folder_path, "index.faiss"))
+        else:
+            self.index = None
         # load the encoding model
         if self.encoding_name is not None:
             self.load_embedding_model(self.encoding_name)
@@ -299,3 +305,60 @@ class SearchDirectory:
                     current_row += batch_size
 
             self._combine_embeddings()
+
+    def create_flat_index(self, embeddings: np.ndarray = None) -> None:
+        """
+        Creates a FAISS flat index from the provided embeddings and saves it to a file.
+
+        :param embeddings: The embeddings to use for creating the index. If None, the method will load embeddings from file.
+        """
+        embeddings = self._check_for_embeddings(embeddings)
+        self.index = faiss_index.create_flat_index(embeddings, file_path=os.path.join(self.folder_path, "index.faiss"))
+
+    def create_ivf_flat_index(self, embeddings: np.ndarray = None, nlist: int = None) -> None:
+        """
+        Creates a FAISS IVF flat index from the provided embeddings and saves it to a file.
+
+        :param embeddings: The embeddings to use for creating the index. If None, the method will load embeddings from file.
+        :param nlist: Number of partitions (clusters) in the IVF index.
+        """
+        embeddings = self._check_for_embeddings(embeddings)
+        self.index = faiss_index.create_IVF_flat_index(embeddings, nlist=nlist, file_path=os.path.join(self.folder_path, "index.faiss"))
+
+    def create_hnsw_index(self,
+                          embeddings: np.ndarray = None,
+                          M: int = 64,
+                          efConstruction: int = 64) -> None:
+        """
+        Creates a FAISS HNSW index from the provided embeddings and saves it to a file.
+
+        :param embeddings: The embeddings to use for creating the index. If None, the method will load embeddings from file.
+        :param M: The number of neighbors to use in the HNSW graph.
+        :param efConstruction: The size of the dynamic list used during the construction of the HNSW graph.
+        """
+        embeddings = self._check_for_embeddings(embeddings)
+        self.index = faiss_index.create_HNSW_index(embeddings, M=M, efConstruction=efConstruction, file_path=os.path.join(self.folder_path, "index.faiss"))
+
+    def search(self, query: str, k: int = 1, *args):
+        """
+        Searches the FAISS index for the most similar chunks to the provided query based on the embeddings.
+
+        :param query: The query string to search for.
+        :param k: The number of nearest neighbors to retrieve.
+        :param args: Additional arguments passed to the FAISS query method.
+
+        :return: A DataFrame containing the most similar chunks based on the query.
+        
+        :raises FileNotFoundError: If 'data_chunked.csv' or FAISS index is not found.
+        :raises EncodingModelError: If no encoding model is loaded.
+        """
+        if self.chunks_path is None:
+            raise FileNotFoundError(f"Error: data_chunked.csv not located in {self.folder_path}")
+        if self.index is None:
+            raise FileNotFoundError(f"Error: no FAISS index found in {self.folder_path}")
+        if self.encoder is None:
+            raise EncodingModelError("Error: no encoding model found. Run 'load_embedding_model' first.")
+        xq = np.expand_dims(self._embed_string(query), axis=0)
+        df = pd.read_csv(os.path.join(self.folder_path, 'data_chunked.csv'))
+        _, indexes = self.index.query(xq, k, *args)
+        return df.iloc[indexes[0]]
