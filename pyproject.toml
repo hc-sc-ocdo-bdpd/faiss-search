@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel>=0.40.0", "build>=1.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "faiss_search"
+description = "A semantic embedding and FAISS search pipeline for document retrieval"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = ["Programming Language :: Python :: 3"]
+dynamic = ["version", "dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
