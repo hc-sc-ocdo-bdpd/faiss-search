@@ -12,6 +12,13 @@ from .tools.errors import EncodingModelError
 from faiss_search import faiss_index
 from sentence_transformers import SentenceTransformer
 
+# import docker specific requirement
+try:
+    import llama_cpp
+    llama_cpp_available = True
+except ImportError:
+    llama_cpp_available = False
+
 class SearchDirectory:
     def __init__(self, folder_path: str) -> None:
         """
@@ -30,10 +37,12 @@ class SearchDirectory:
             with open(os.path.join(self.folder_path, "setup_data.json"), 'r') as f:
                 setup_data = json.load(f)
                 self.encoding_name = setup_data['encoding_model']
+                self.is_gguf = setup_data['is_gguf']
                 self.n_chunks = setup_data['number_of_chunks']
         else:
             self.n_chunks = None
             self.encoding_name = None
+            self.is_gguf = None
         # get the faiss index
         if os.path.exists(os.path.join(self.folder_path, "index.faiss")):
             self.index = faiss_index.load_index(os.path.join(self.folder_path, "index.faiss"))
@@ -67,6 +76,7 @@ class SearchDirectory:
         """
         setup_data = {
             'encoding_model': self.encoding_name,
+            'is_gguf': self.is_gguf,
             'number_of_chunks': self.n_chunks
         }
         with open(os.path.join(self.folder_path, "setup_data.json"), 'w') as f:
@@ -80,7 +90,10 @@ class SearchDirectory:
 
         :return: The embedding vector of the input text.
         """
-        embedding = self.encoder.encode(text)
+        if self.is_gguf:
+            embedding = self.encoder.create_embedding(text)['data'][0]['embedding']
+        else:
+            embedding = self.encoder.encode(text)
         return embedding
     
     def _combine_embeddings(self) -> None:
@@ -192,7 +205,7 @@ class SearchDirectory:
         print(f"Total rows (excluding header): {total_rows}")
 
         # Process each row with tqdm to show progress
-        for index, row in tqdm(df.iterrows(), total=total_rows, desc="Processing rows"):
+        for _, row in tqdm(df.iterrows(), total=total_rows, desc="Processing rows"):
             file_path = row[document_path_column]
             content = row[document_text_column]
             
@@ -218,14 +231,26 @@ class SearchDirectory:
 
         print("Chunking complete and saved to 'data_chunked.csv'.")
 
-    def load_embedding_model(self, model_name: str = "paraphrase-MiniLM-L3-v2") -> None:
+    def load_embedding_model(self, model_name: str = "paraphrase-MiniLM-L3-v2", gguf: bool = False) -> None:
         """
         Loads the specified embedding model and saves the model name to JSON.
 
         :param model_name: Name of the embedding model to load.
+                           If gguf is set to true the model name will instead be the path to the gguf file.
+        :param gguf: True if a gguf model is being used; false if a sentance-transformer model is being used.
         """
         self.encoding_name = model_name
-        self.encoder = SentenceTransformer(model_name)
+        if gguf:
+            if llama_cpp_available:
+                self.is_gguf = True
+                self.encoder = llama_cpp.Llama(model_path=model_name,
+                                            embedding=True,
+                                            verbose=False)
+            else:
+                print("Cannot load .gguf file. llama-cpp is not available.")
+        else:
+            self.is_gguf = False
+            self.encoder = SentenceTransformer(model_name)
         self._save_to_json()
 
     def embed_text(self, row_start: int = 0, row_end: int = None, batch_size: int = 1000) -> None:
